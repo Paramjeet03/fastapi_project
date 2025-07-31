@@ -16,5 +16,12 @@ def user_only(current_user:dict=Depends(token_decode)):
         raise HTTPException(status_code=403, detail="Admins Not allowed")
     return current_user
 
+def both_user(current_user:dict=Depends(token_decode)):
+    if current_user["role"] != "admin":
+        return current_user
+    elif current_user["role"] == "admin":
+        return current_user
+
 admin=Depends(admin_only)
 user=Depends(user_only)
+both=Depends(both_user)

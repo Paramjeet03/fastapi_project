@@ -11,7 +11,7 @@ class UpdateTask(BaseModel):
     description: str = None
     status: str = None
 
-class TaskOut(TaskCreate):
+class TaskOut(BaseModel):
     id: int
 
     class Config:

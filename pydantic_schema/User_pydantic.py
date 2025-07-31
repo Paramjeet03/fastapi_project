@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-
+from datetime import datetime
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
@@ -12,8 +12,7 @@ class UserOut(BaseModel):
     email: EmailStr
     role: str
 
-    class Config:
-        from_attributes = True
+   
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -24,5 +23,11 @@ class Update_user(BaseModel):
      role:str = None
      name:str = None
 
+class log_detail(BaseModel):
+    
+    status:str
+    logOutTime:datetime
+
+
 class Config:
-        from_attributes = True
+    from_attributes = True
