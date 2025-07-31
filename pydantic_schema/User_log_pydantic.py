@@ -6,8 +6,6 @@ class add_log(BaseModel):
     logout_time:datetime
 
 
-class updateLog(add_log):
-    id:int
 
 class getlog(BaseModel):
     id:int

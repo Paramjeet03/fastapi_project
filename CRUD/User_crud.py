@@ -1,5 +1,5 @@
 from src.pydantic_schema.User_pydantic import UserLogin
-from src.pydantic_schema.User_log_pydantic import add_log,updateLog,getlog
+from src.pydantic_schema.User_log_pydantic import add_log,getlog
 from src.Database.session import localSession
 from src.Database.db_model import User_table,Task_table,User_log
 from src.pydantic_schema.task_pydantic import TaskOut
@@ -63,10 +63,10 @@ def addLog(log: add_log,name:str):
         db.close()
         db.close()
 
-def updatelog(log: updateLog):
+def updatelog(log: add_log,name:str):
     db = localSession()
-    
-    data = db.query(User_log).filter(User_log.user_id == log.id).order_by(User_log.idx.desc()).first()
+    id=get_user_id(name=name)
+    data = db.query(User_log).filter(User_log.user_id == id).order_by(User_log.idx.desc()).first()
     
     if not data:
         raise HTTPException(status_code=401, detail="There is no previously added log for this ID")
@@ -76,14 +76,14 @@ def updatelog(log: updateLog):
         data.logout_time = log.logout_time
 
     db.commit()
-    db.refresh(data)
     db.close()
-    return {"message": "Log updated successfully", "log_id": data.idx}
+    return {"message": "Log updated successfully"}
 
 
-def getlog_user(id:getlog):
+def getlog_user(id:int):
     db=localSession()
-    data=db.query(User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).filter(User_log.user_id==id).join(User_table).all()
+    data=db.query(User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log,User_log.user_id==User_table.id).filter(User_log.user_id==id).all()
+    db.close()
     if not data:
         raise HTTPException(status_code=401,detail="No log added by User")
     else:

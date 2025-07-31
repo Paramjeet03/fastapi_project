@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.api.Admin_api import login,createAccount,update,taskAssign,taskUpdate,seeTask,setLog,getLogadmin
+from src.api.Admin_api import login,createAccount,update,taskAssign,taskUpdate,seeTask,setLog,getLogadmin,getlogUser,updateLog
 
 app=FastAPI()
 app.include_router(login.router,prefix="/login",tags=["Login"])
@@ -10,3 +10,5 @@ app.include_router(taskUpdate.router,prefix="/Admin/taskUpdate",tags=["Task Upda
 app.include_router(seeTask.router,prefix="/User/seeTask",tags=["See Task"])
 app.include_router(setLog.router,prefix="/User/addLog",tags=["Add Log"])
 app.include_router(getLogadmin.router,prefix="/Admin/getLog",tags=["See log (admin)"])
+app.include_router(getlogUser.router,prefix="/User/getLog",tags=["See log (User)"])
+app.include_router(updateLog.router,prefix="/User/updateLog",tags=["Log Update"])
