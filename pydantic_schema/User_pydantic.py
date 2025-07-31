@@ -23,10 +23,7 @@ class Update_user(BaseModel):
      role:str = None
      name:str = None
 
-class log_detail(BaseModel):
-    
-    status:str
-    logOutTime:datetime
+
 
 
 class Config:

@@ -1,7 +1,8 @@
 from src.pydantic_schema.User_pydantic import UserCreate,Update_user
 from src.pydantic_schema.task_pydantic import TaskCreate,UpdateTask
+from src.pydantic_schema.User_log_pydantic import getlog
 from src.Database.session import localSession
-from src.Database.db_model import User_table,Task_table
+from src.Database.db_model import User_table,Task_table,User_log
 from src.Auth.Hashing_token import hash_pass
 from fastapi import HTTPException
 
@@ -80,5 +81,21 @@ def updateTask(idx: int, updateTask: UpdateTask):
         return {"message": "User Task updated successfully"}
     else:
         raise HTTPException(status_code=400, detail="No values provided for update")
-
-
+    
+def getlog_admin(log_id:getlog):
+    db=localSession()
+    data=db.query(User_table.id,User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log, User_table.id == User_log.user_id).filter(User_log.user_id==log_id.id).all()
+    if not data:
+        raise HTTPException(status_code=401,detail="No log added by User")
+    else:
+        log_ls=[{
+            "User_id":i[0],
+            "User_Name":i[1],
+            "User_email":i[2],
+            "status":i[3],
+            "login_time":i[4],
+            "logout_time":i[5]
+        }
+        for i in data
+        ]
+        return log_ls

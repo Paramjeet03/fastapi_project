@@ -38,7 +38,7 @@ class User_log(Base):
     idx = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("User_table.id"))
     status = Column(String(50))
-    login_time = Column(DateTime)
+    login_time = Column(DateTime ,default=lambda: datetime.now(ISTZ))
     logout_time = Column(DateTime)
 
     def __repr__(self):

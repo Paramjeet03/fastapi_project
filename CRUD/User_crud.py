@@ -1,9 +1,9 @@
-from src.pydantic_schema.User_pydantic import UserLogin,log_detail
+from src.pydantic_schema.User_pydantic import UserLogin
+from src.pydantic_schema.User_log_pydantic import add_log,updateLog,getlog
 from src.Database.session import localSession
 from src.Database.db_model import User_table,Task_table,User_log
 from src.pydantic_schema.task_pydantic import TaskOut
-from fastapi import HTTPException,Depends
-from src.Dependancy.dependancy import user
+from fastapi import HTTPException
 
 
 def get_user(login:UserLogin):
@@ -36,10 +36,10 @@ def getTask(out: TaskOut):
     finally:
         db.close()
 
-def get_user_id(current_user: dict = user):
+def get_user_id(name:str):
     db = localSession()
     try:
-        result = db.query(User_table.id).filter(User_table.email == current_user["username"]).first()
+        result = db.query(User_table.id).filter(User_table.name == name).first()
         if result:
             return result[0]
         else:
@@ -47,17 +47,14 @@ def get_user_id(current_user: dict = user):
     finally:
         db.close()
 
-def addLog(log: log_detail, user_id: int = Depends(get_user_id)):
+def addLog(log: add_log,name:str):
+    result=get_user_id(name=name)
     db = localSession()
-    try:    
-        user = db.query(User_table).filter(User_table.id == user_id).first()
-        if not user:
-            raise HTTPException(status_code=400, detail="User ID does not exist!")
-        else:
-            log_data = User_log(user_id=user_id, **log.dict())
-            db.add(log_data)
-            db.commit()
-            return {"message": "Log added successfully"}
+    try:
+        log_data = User_log(user_id=result, **log.dict())
+        db.add(log_data)
+        db.commit()
+        return {"message": "Log added successfully"}
         
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -65,3 +62,39 @@ def addLog(log: log_detail, user_id: int = Depends(get_user_id)):
     finally:
         db.close()
         db.close()
+
+def updatelog(log: updateLog):
+    db = localSession()
+    
+    data = db.query(User_log).filter(User_log.user_id == log.id).order_by(User_log.idx.desc()).first()
+    
+    if not data:
+        raise HTTPException(status_code=401, detail="There is no previously added log for this ID")
+    if log.status:
+        data.status = log.status
+    if log.logout_time:
+        data.logout_time = log.logout_time
+
+    db.commit()
+    db.refresh(data)
+    db.close()
+    return {"message": "Log updated successfully", "log_id": data.idx}
+
+
+def getlog_user(id:getlog):
+    db=localSession()
+    data=db.query(User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).filter(User_log.user_id==id).join(User_table).all()
+    if not data:
+        raise HTTPException(status_code=401,detail="No log added by User")
+    else:
+        log_ls=[{
+            "User_name":i[0],
+            "User_email":i[1],
+            "status":i[2],
+            "login_time":i[3],
+            "logout_time":i[4]
+        }
+        for i in data
+        ]
+        return log_ls
+
