@@ -96,5 +96,5 @@ def getlog_user(id:int):
         }
         for i in data
         ]
-        return log_ls
+        return log_ls    
 

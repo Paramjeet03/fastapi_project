@@ -1,33 +1,34 @@
-from src.pydantic_schema.User_pydantic import UserCreate,Update_user
+from src.pydantic_schema.User_pydantic import UserCreate,Update_user,EmailStr
 from src.pydantic_schema.task_pydantic import TaskCreate,UpdateTask
 from src.pydantic_schema.User_log_pydantic import getlog
 from src.Database.session import localSession
 from src.Database.db_model import User_table,Task_table,User_log
 from src.Auth.Hashing_token import hash_pass
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 
 def new_User(user:UserCreate):
+        
         db=localSession()
         if db.query(User_table).filter(User_table.email == user.email).first():
-            raise HTTPException(status_code=400,detail="User already registered")
+            raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User already registered")
         db.add(User_table(name=user.name, email=user.email, pass_hash=hash_pass(user.password), role=user.role))
         db.commit()
         db.close()
-        
+
 
 def Update_user_table(user: Update_user):
     db=localSession()
     user_in_db = db.query(User_table).filter(User_table.email == user.email).first()
     if not user_in_db:
-        raise HTTPException(status_code=400, detail="User does not exist")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
 
     updated = False
 
-    if user.role is not None:
+    if user.role is not None and user.role.strip() !="":
         user_in_db.role = user.role
         updated = True
 
-    if user.name is not None:
+    if user.name is not None and user.name.strip() !="":
         user_in_db.name = user.name
         updated = True
 
@@ -36,7 +37,24 @@ def Update_user_table(user: Update_user):
         db.close()
         return {"message": "User updated successfully"}
     else:
-        raise HTTPException(status_code=400, detail="No values provided for update")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No values provided for update")
+    
+def delete_user_table(user_email:EmailStr):
+    db=localSession()
+    user_in_db = db.query(User_table).filter(User_table.email == user_email).first()
+    if not user_in_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+    else:
+        db.delete(user_in_db)
+        db.commit()
+
+def get_user(user_email:EmailStr):
+    db=localSession()
+    user_in_db = db.query(User_table).filter(User_table.email == user_email).first()
+    if not user_in_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist or Wrong Email")
+    else:
+        return {"id :- ":user_in_db.id,"Name :-":user_in_db.name,"Role :- ":user_in_db.role}
     
 def assignTask(task:TaskCreate):
     db=localSession()
