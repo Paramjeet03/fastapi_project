@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from src.api.Admin_api import Welcome,login,createAccount,update,report,deleteAccount,readAccount
+from src.api.Account_api import Welcome,login,createAccount,update,report,deleteAccount,readAccount
 from src.api.Task_crud_api import taskAssign,taskUpdate,seeTask
 from src.api.log_api import setLog,getLogadmin,getlogUser,updateLog
 
