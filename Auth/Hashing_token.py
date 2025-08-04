@@ -2,9 +2,8 @@ from passlib.context import CryptContext
 from src.Config.Config import setting
 from src.pydantic_schema.User_pydantic import UserCreate
 from datetime import datetime,timedelta,timezone
-from jose import jwt,JWTError
-from fastapi import HTTPException,Depends
-from fastapi.security import OAuth2PasswordRequestForm,OAuth2PasswordBearer
+from jose import jwt
+from fastapi.security import OAuth2PasswordBearer
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/login")
 pwdContext=CryptContext(schemes=[setting.PWD_HASH_ALGO],deprecated="auto")

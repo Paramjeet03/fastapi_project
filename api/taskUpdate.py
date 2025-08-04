@@ -6,9 +6,9 @@ from src.CRUD.Admin_crud import updateTask
 router=APIRouter()
 
 @router.post("/")
-def taskUpdation(idx:int,task:UpdateTask,current_user:dict = admin):
+def taskUpdation(task_id:int,task:UpdateTask,current_user:dict = admin):
     try:
-        updateTask(idx=idx,updateTask=task)
+        updateTask(task_id=task_id,updateTask=task)
         return {"message":"Task table updation sucessfully "}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException as e:
+        raise e

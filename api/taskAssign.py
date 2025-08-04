@@ -7,8 +7,11 @@ router=APIRouter()
 
 @router.post("/")
 def assigntask(task:TaskCreate,current_user:dict = admin):
-    try:
-        assignTask(task=task)
-        return {"message":"Done"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if  not task.title.strip() or not task.description.strip() or not task.status.strip():
+        raise HTTPException(status_code=400,detail="Empty string is not allowed")
+    else:
+        try:
+            assignTask(task=task)
+            return {"message":"Done"}
+        except HTTPException as e:
+            raise e

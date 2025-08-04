@@ -66,40 +66,48 @@ def assignTask(task:TaskCreate):
         db.commit()
 
 
-def updateTask(idx: int, updateTask: UpdateTask):
+def updateTask(task_id: int, updateTask: UpdateTask):
     db = localSession()
-    user_in_db = db.query(Task_table).filter(Task_table.idx == idx).first()
+    user_in_db = db.query(Task_table).filter(Task_table.idx == task_id).first()
+    
     if not user_in_db:
-        raise HTTPException(status_code=400, detail="Task id does not exist")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Task ID does not exist in the task database"
+        )
 
     updated = False
 
     if updateTask.assigned_to is not None:
         assigned_user = db.query(User_table).filter(User_table.id == updateTask.assigned_to).first()
         if not assigned_user:
-            raise HTTPException(status_code=400, detail="Assigned user does not exist")
-        user_in_db.assigned_to = updateTask.assigned_to
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Assigned user does not exist in the User Database"
+            )
+        else:
+            user_in_db.assigned_to = updateTask.assigned_to
+            updated = True
+    if updateTask.title is not None and updateTask.title.strip():
+        user_in_db.title = updateTask.title.strip()
         updated = True
-
-    if updateTask.title is not None:
-        user_in_db.title = updateTask.title
+    if updateTask.description is not None and updateTask.description.strip():
+        user_in_db.description = updateTask.description.strip()
         updated = True
-
-    if updateTask.description is not None:
-        user_in_db.description = updateTask.description
+    if updateTask.status is not None and updateTask.status.strip():
+        user_in_db.status = updateTask.status.strip()
         updated = True
-
-    if updateTask.status is not None:
-        user_in_db.status = updateTask.status
-        updated = True
-
     if updated:
         db.commit()
         db.close()
         return {"message": "User Task updated successfully"}
     else:
-        raise HTTPException(status_code=400, detail="No values provided for update")
+        raise HTTPException(
+            status_code=400,
+            detail="No valid values provided for update"
+        )
     
+
 def getlog_admin(log_id:getlog):
     db=localSession()
     data=db.query(User_table.id,User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log, User_table.id == User_log.user_id).filter(User_log.user_id==log_id.id).all()

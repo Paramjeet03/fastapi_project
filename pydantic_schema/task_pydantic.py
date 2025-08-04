@@ -12,7 +12,7 @@ class UpdateTask(BaseModel):
     status: str = None
 
 class TaskOut(BaseModel):
-    id: int
+    id:int
 
     class Config:
         orm_mode = True

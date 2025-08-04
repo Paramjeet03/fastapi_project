@@ -3,7 +3,7 @@ from src.pydantic_schema.User_log_pydantic import add_log,getlog
 from src.Database.session import localSession
 from src.Database.db_model import User_table,Task_table,User_log
 from src.pydantic_schema.task_pydantic import TaskOut
-from fastapi import HTTPException
+from fastapi import HTTPException,status
 
 
 def get_user(login:UserLogin):
@@ -14,19 +14,21 @@ def get_user(login:UserLogin):
 
 def getTask(out: TaskOut):
     db = localSession()
+    if not user.name.strip() or not user.email.strip() or not user.password.strip() or not user.role.strip():
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Empty Input")
     try:
-        user = db.query(User_table).filter(User_table.id == out.id).first()
+        user = db.query(User_table).filter(User_table.id== out.id).first()
         if not user:
             raise HTTPException(status_code=400, detail="User ID does not exist!")
 
-        tasks = db.query(Task_table.assigned_to,User_table.name,User_table.email,Task_table.title,Task_table.description,Task_table.status,Task_table.given_on).filter(Task_table.assigned_to == out.id).join(User_table).all()
+        tasks = db.query(Task_table.idx,Task_table.assigned_to,User_table.name,User_table.email,Task_table.title,Task_table.description,Task_table.status,Task_table.given_on).filter(Task_table.assigned_to == out.id).join(User_table).all()
 
         if not tasks:
             raise HTTPException(status_code=400, detail="No task assigned to User ID!")
 
         task_list = [
             {
-                "assigned_to": t[0],"name": t[1],"email": t[2],"title": t[3],"description": t[4],"status": t[5],"given_on": t[6],
+                "task_id":t[0] ,"assigned_to": t[1],"name": t[2],"email": t[3],"title": t[4],"description": t[5],"status": t[6],"given_on": t[7]
             }
             for t in tasks
         ]
