@@ -14,17 +14,16 @@ def get_user(login:UserLogin):
 
 def getTask(out: TaskOut):
     db = localSession()
-    if not user.name.strip() or not user.email.strip() or not user.password.strip() or not user.role.strip():
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Empty Input")
+    
     try:
         user = db.query(User_table).filter(User_table.id== out.id).first()
         if not user:
-            raise HTTPException(status_code=400, detail="User ID does not exist!")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User ID does not exist!")
 
         tasks = db.query(Task_table.idx,Task_table.assigned_to,User_table.name,User_table.email,Task_table.title,Task_table.description,Task_table.status,Task_table.given_on).filter(Task_table.assigned_to == out.id).join(User_table).all()
 
         if not tasks:
-            raise HTTPException(status_code=400, detail="No task assigned to User ID!")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No task assigned to User ID!")
 
         task_list = [
             {
@@ -45,25 +44,23 @@ def get_user_id(name:str):
         if result:
             return result[0]
         else:
-            raise HTTPException(status_code=400, detail="User not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     finally:
         db.close()
 
 def addLog(log: add_log,name:str):
-    result=get_user_id(name=name)
     db = localSession()
-    try:
+    result=get_user_id(name=name)
+    data=db.query(Task_table).filter(Task_table.idx == log.task_id).first()
+    if not data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="Invalid Task id")
+    else:
         log_data = User_log(user_id=result, **log.dict())
         db.add(log_data)
         db.commit()
+        db.close()
         return {"message": "Log added successfully"}
         
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    
-    finally:
-        db.close()
-        db.close()
 
 def updatelog(log: add_log,name:str):
     db = localSession()
@@ -71,11 +68,11 @@ def updatelog(log: add_log,name:str):
     data = db.query(User_log).filter(User_log.user_id == id).order_by(User_log.idx.desc()).first()
     
     if not data:
-        raise HTTPException(status_code=401, detail="There is no previously added log for this ID")
+        raise HTTPException(status_code=401, detail="There is no previously added log from this ID")
     if log.status:
         data.status = log.status
-    if log.logout_time:
-        data.logout_time = log.logout_time
+    if log.login_time:
+        data.login_time = log.login_time
 
     db.commit()
     db.close()
@@ -84,17 +81,18 @@ def updatelog(log: add_log,name:str):
 
 def getlog_user(id:int):
     db=localSession()
-    data=db.query(User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log,User_log.user_id==User_table.id).filter(User_log.user_id==id).all()
+    data=db.query(User_log.idx,User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log,User_log.user_id==User_table.id).filter(User_log.user_id==id).all()
     db.close()
     if not data:
-        raise HTTPException(status_code=401,detail="No log added by User")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No log added by User")
     else:
         log_ls=[{
-            "User_name":i[0],
-            "User_email":i[1],
-            "status":i[2],
-            "login_time":i[3],
-            "logout_time":i[4]
+            "log_idx":i[0],
+            "User_name":i[1],
+            "User_email":i[2],
+            "status":i[3],
+            "login_time":i[4],
+            "logout_time":i[5]
         }
         for i in data
         ]

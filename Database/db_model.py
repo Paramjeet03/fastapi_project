@@ -36,10 +36,11 @@ class Task_table(Base):
 class User_log(Base):
     __tablename__ = "User_log"
     idx = Column(Integer, primary_key=True)
+    task_id=Column(Integer)
     user_id = Column(Integer, ForeignKey("User_table.id"))
     status = Column(String(50))
-    login_time = Column(DateTime ,default=lambda: datetime.now(ISTZ))
-    logout_time = Column(DateTime)
+    login_time = Column(DateTime )
+    logout_time = Column(DateTime,default=lambda: datetime.now(ISTZ))
 
     def __repr__(self):
         return f'{{"Idx": {self.idx}, "Id": {self.user_id}, "Status": "{self.status}", "Login": "{self.login_time}", "Logout": "{self.logout_time}"}}'

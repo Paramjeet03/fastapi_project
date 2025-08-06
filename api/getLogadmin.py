@@ -9,5 +9,5 @@ router=APIRouter()
 def getlogAdmin(id:getlog,current_user:dict = admin):
     try:
         return getlog_admin(log_id=id)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except HTTPException as e:
+        raise e

@@ -1,19 +1,20 @@
 from src.pydantic_schema.User_pydantic import UserCreate,Update_user,EmailStr
-from src.pydantic_schema.task_pydantic import TaskCreate,UpdateTask
+from src.pydantic_schema.task_pydantic import TaskCreate,UpdateTask,TaskOut
 from src.pydantic_schema.User_log_pydantic import getlog
 from src.Database.session import localSession
 from src.Database.db_model import User_table,Task_table,User_log
 from src.Auth.Hashing_token import hash_pass
 from fastapi import HTTPException,status
+from datetime import datetime
 
 def new_User(user:UserCreate):
         
-        db=localSession()
-        if db.query(User_table).filter(User_table.email == user.email).first():
-            raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User already registered")
-        db.add(User_table(name=user.name, email=user.email, pass_hash=hash_pass(user.password), role=user.role))
-        db.commit()
-        db.close()
+    db=localSession()
+    if db.query(User_table).filter(User_table.email == user.email).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User already registered")
+    db.add(User_table(name=user.name, email=user.email, pass_hash=hash_pass(user.password), role=user.role))
+    db.commit()
+    db.close()
 
 
 def Update_user_table(user: Update_user):
@@ -69,58 +70,66 @@ def assignTask(task:TaskCreate):
 def updateTask(task_id: int, updateTask: UpdateTask):
     db = localSession()
     user_in_db = db.query(Task_table).filter(Task_table.idx == task_id).first()
-    
     if not user_in_db:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task ID does not exist in the task database"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task id does not exist in task database")
 
     updated = False
 
-    if updateTask.assigned_to is not None:
+    if updateTask.assigned_to is not None :
         assigned_user = db.query(User_table).filter(User_table.id == updateTask.assigned_to).first()
         if not assigned_user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Assigned user does not exist in the User Database"
-            )
-        else:
-            user_in_db.assigned_to = updateTask.assigned_to
-            updated = True
-    if updateTask.title is not None and updateTask.title.strip():
-        user_in_db.title = updateTask.title.strip()
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Assigned user does not exist in Main Database")
+        user_in_db.assigned_to = updateTask.assigned_to
         updated = True
-    if updateTask.description is not None and updateTask.description.strip():
-        user_in_db.description = updateTask.description.strip()
+
+    if updateTask.title is not None and updateTask.title !="":
+        user_in_db.title = updateTask.title
         updated = True
-    if updateTask.status is not None and updateTask.status.strip():
-        user_in_db.status = updateTask.status.strip()
+
+    if updateTask.description is not None and updateTask.description !="":
+        user_in_db.description = updateTask.description
         updated = True
+
+    if updateTask.status is not None and updateTask.status !="":
+        user_in_db.status = updateTask.status
+        updated = True
+
     if updated:
+        user_in_db.given_on = datetime.now()
         db.commit()
         db.close()
         return {"message": "User Task updated successfully"}
     else:
-        raise HTTPException(
-            status_code=400,
-            detail="No valid values provided for update"
-        )
+        db.close()
+        raise HTTPException(status_code=400, detail="No values provided for update")
     
+def deleteTask(out:TaskOut):
+    db = localSession()
+    user_in_db = db.query(Task_table).filter(Task_table.idx == out.id).first()
+    if not user_in_db:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task id does not exist in task database")
+    else:
+        db.query(Task_table).filter(Task_table.idx==out.id).delete()
+        db.commit()
+        return {"message":"Delete task sucessfully"}
 
+
+
+    
 def getlog_admin(log_id:getlog):
     db=localSession()
-    data=db.query(User_table.id,User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log, User_table.id == User_log.user_id).filter(User_log.user_id==log_id.id).all()
+    data=db.query(User_log.idx,User_table.id,User_table.name,User_table.email,User_log.status,User_log.login_time,User_log.logout_time).join(User_log, User_table.id == User_log.user_id).filter(User_log.user_id==log_id.id).all()
     if not data:
-        raise HTTPException(status_code=401,detail="No log added by User")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail="No log added by User")
     else:
         log_ls=[{
-            "User_id":i[0],
-            "User_Name":i[1],
-            "User_email":i[2],
-            "status":i[3],
-            "login_time":i[4],
-            "logout_time":i[5]
+            "log_idx":i[0],
+            "User_id":i[1],
+            "User_Name":i[2],
+            "User_email":i[3],
+            "status":i[4],
+            "login_time":i[5],
+            "logout_time":i[6]
         }
         for i in data
         ]

@@ -2,8 +2,9 @@ from pydantic import BaseModel
 from datetime import datetime
 
 class add_log(BaseModel):
+    task_id:int
     status:str
-    logout_time:datetime
+    login_time:datetime
 
 
 
