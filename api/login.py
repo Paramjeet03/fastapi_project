@@ -18,6 +18,3 @@ def login(login_data: OAuth2PasswordRequestForm = Depends()):
         "access_token": token,
         "token_type": "bearer"
     }
-
-
-    
