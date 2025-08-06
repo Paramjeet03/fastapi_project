@@ -8,7 +8,8 @@ router=APIRouter()
 @router.post("/")
 def deletion(Email:EmailStr, current_user: dict = admin):
     try:
-        delete_user_table(user_email=Email)
+        master=current_user["username"]
+        delete_user_table(user_email=Email,master=master)
         return {"message":"Deletion Done sucessfully"}
     except HTTPException as http:
         raise http

@@ -8,9 +8,8 @@ router=APIRouter()
 @router.post("/")
 def updation(user:Update_user, current_user: dict = admin):
     try:
-        Update_user_table(user=user)
+        master=current_user["username"]
+        Update_user_table(user=user,master=master)
         return {"message":"Updation Done sucessfully"}
     except HTTPException as http:
         raise http
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))

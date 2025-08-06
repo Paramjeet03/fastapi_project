@@ -11,7 +11,7 @@ def login(login_data: OAuth2PasswordRequestForm = Depends()):
     try:
         user = UserLogin(email=login_data.username, password=login_data.password)
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Plz enter valid Email")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Invaild credantial !!")
     token = user_login(user)
     
     return {

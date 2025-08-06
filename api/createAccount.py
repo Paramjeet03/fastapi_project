@@ -11,7 +11,8 @@ def create_account(user: UserCreate, current_user: dict = admin):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,detail="Empty Input")
         
     try:
-        new_User(user)
+        master=current_user["username"]
+        new_User(user,master=master)
         return {"message": "User created successfully"}
     except HTTPException as http_ex:
         raise http_ex

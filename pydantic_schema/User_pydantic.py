@@ -1,11 +1,15 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr 
+from src.Enum_modal.Enum import roleEnum
 from typing import Optional
+
+
 
 class UserCreate(BaseModel):
     name: str
     email: EmailStr
     password: str
-    role: str
+    phone :str
+    role: roleEnum
 
 class UserOut(BaseModel):
     id: int
@@ -21,7 +25,7 @@ class UserLogin(BaseModel):
 
 class Update_user(BaseModel):
      email:EmailStr
-     role:str = None
+     role:Optional[roleEnum] =None
      name:str = None
 
 

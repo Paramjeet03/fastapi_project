@@ -2,24 +2,24 @@ from src.pydantic_schema.User_pydantic import UserCreate,Update_user,EmailStr
 from src.pydantic_schema.task_pydantic import TaskCreate,UpdateTask,TaskOut
 from src.pydantic_schema.User_log_pydantic import getlog
 from src.Database.session import localSession
-from src.Database.db_model import User_table,Task_table,User_log
+from src.Database.db_model import User_table,Task_table,User_log,Update_log,delete_log
 from src.Auth.Hashing_token import hash_pass
 from fastapi import HTTPException,status
 from datetime import datetime
 
-def new_User(user:UserCreate):
+def new_User(user:UserCreate,master:str):
         
     db=localSession()
     if db.query(User_table).filter(User_table.email == user.email).first():
         raise HTTPException(status_code=status.HTTP_409_CONFLICT,detail="User already registered")
-    db.add(User_table(name=user.name, email=user.email, pass_hash=hash_pass(user.password), role=user.role))
+    db.add(User_table(name=user.name, email=user.email, pass_hash=hash_pass(user.password), role=user.role,phone=user.phone,create_by=master))
     db.commit()
     db.close()
 
 
-def Update_user_table(user: Update_user):
+def Update_user_table(user: Update_user,master:str):
     db=localSession()
-    user_in_db = db.query(User_table).filter(User_table.email == user.email).first()
+    user_in_db = db.query(User_table).filter(User_table.email.ilike(user.email)).first()
     if not user_in_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
 
@@ -34,19 +34,25 @@ def Update_user_table(user: Update_user):
         updated = True
 
     if updated:
+        data=Update_log(update_user=user_in_db.email,Updatedby=master)
+        db.add(data)
         db.commit()
         db.close()
         return {"message": "User updated successfully"}
     else:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No values provided for update")
     
-def delete_user_table(user_email:EmailStr):
+def delete_user_table(user_email:EmailStr,master:str):
     db=localSession()
     user_in_db = db.query(User_table).filter(User_table.email == user_email).first()
     if not user_in_db:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User does not exist")
+    if user_in_db.email=="Rootadmin@example.com":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="Not allowed to delete Root admin")
     else:
         db.delete(user_in_db)
+        data=delete_log( delete_user=user_in_db.email,deleteBy=master)
+        db.add(data)
         db.commit()
 
 def get_user(user_email:EmailStr):
